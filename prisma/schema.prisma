@@ -1,0 +1,91 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             Int      @id @default(autoincrement())
+  email          String?  @unique // Optional: For admin login
+  passwordHash   String?           // Optional: For admin password
+  firstName      String?           // Optional: Employees will have this
+  lastName       String?           // Optional: Employees will have this
+  idNumberHash   String?           // Optional: Employees use this for login
+  role           Role     @default(EMPLOYEE)
+  agreedPolicies String   @default("[]") // JSON string of agreed policies
+  completedTools String   @default("[]") // JSON string of completed tool IDs
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  announcements  Announcement[] // Relation to announcements created by this user
+  loginAttempts  LoginAttempt[] @relation("UserLoginAttempts") // Relation to login attempts by this user
+  authoredMaintenanceEvents MaintenanceEvent[] @relation("AuthoredMaintenanceEvents")
+
+  // Remove the unique constraint on firstName/lastName as admins might not have them
+  // @@unique([firstName, lastName])
+}
+
+model Announcement {
+  id          Int      @id @default(autoincrement())
+  title       String
+  content     String   // Could be TEXT for longer content if needed, String is fine for SQLite
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  // publishedAt DateTime? // Optional: for scheduling future announcements - REMOVED
+  isActive    Boolean  @default(true) // To quickly enable/disable
+
+  author    User?    @relation(fields: [authorId], references: [id])
+  authorId  Int?     // ID of the admin user who created it
+}
+
+// Define the Role enum
+enum Role {
+  EMPLOYEE
+  ADMIN
+}
+
+model LoginAttempt {
+  id                  Int      @id @default(autoincrement())
+  timestamp           DateTime @default(now())
+  ipAddress           String?  // Store IP address of the attempt
+  userAgent           String?  // Store user agent string
+  attemptedIdentifier String   // What was used to try to log in (e.g., email, or "firstName lastName")
+  success             Boolean  // Was the login attempt successful?
+  userId              Int?     // Optional: Foreign key to User table if login was successful or user identified
+  user                User?    @relation(fields: [userId], references: [id], name: "UserLoginAttempts") // Optional relation to User
+
+  @@index([timestamp])
+  @@index([userId])
+}
+
+model MaintenanceEvent {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  startDate   DateTime
+  endDate     DateTime? // Optional, for events with a specific duration
+  type        MaintenanceEventType @default(REGULAR_UPDATE) // E.g., PREVENTIVE, REGULAR_UPDATE, EMERGENCY
+  
+  author    User     @relation("AuthoredMaintenanceEvents", fields: [authorId], references: [id])
+  authorId  Int
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([authorId])
+  @@index([startDate])
+}
+
+enum MaintenanceEventType {
+  PREVENTIVE_MAINTENANCE
+  REGULAR_UPDATE
+  EMERGENCY_MAINTENANCE
+  SERVICE_DEPLOYMENT
+  OTHER
+}
