@@ -258,20 +258,41 @@ const MaintenanceSchedulerSection: React.FC = () => {
                         <Calendar
                             mode="single"
                             selected={startDate}
-                            onSelect={setStartDate}
+                            onSelect={(day) => {
+                                const newSelectedDate = day;
+                                if (newSelectedDate) {
+                                    const currentHours = startDate?.getHours() ?? 0;
+                                    const currentMinutes = startDate?.getMinutes() ?? 0;
+                                    const updatedDate = new Date(newSelectedDate);
+                                    updatedDate.setHours(currentHours, currentMinutes, 0, 0);
+                                    setStartDate(updatedDate);
+                                } else {
+                                    setStartDate(undefined);
+                                }
+                            }}
                         />
                         <div className="p-2 border-t border-border">
                             <Input
                               type="time"
                               value={startDate ? format(startDate, "HH:mm") : ""}
                               onChange={(e) => {
-                                const time = e.target.value.split(':');
-                                if (time.length === 2) {
-                                    const hours = parseInt(time[0]);
-                                    const minutes = parseInt(time[1]);
-                                    const newFullDate = startDate ? new Date(startDate) : new Date(); // Use current date or today
-                                    newFullDate.setHours(hours, minutes, 0, 0);
-                                    setStartDate(newFullDate);
+                                const timeValue = e.target.value;
+                                if (timeValue) {
+                                    const timeParts = timeValue.split(':');
+                                    if (timeParts.length === 2) {
+                                        const hours = parseInt(timeParts[0]);
+                                        const minutes = parseInt(timeParts[1]);
+                                        // Initialize with current startDate's date part, or today if startDate is undefined
+                                        const newFullDate = startDate ? new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate()) : new Date();
+                                        newFullDate.setHours(hours, minutes, 0, 0);
+                                        setStartDate(newFullDate);
+                                    }
+                                } else { // Handle clearing the time
+                                    if (startDate) {
+                                        const newFullDate = new Date(startDate);
+                                        newFullDate.setHours(0,0,0,0); // Reset time to midnight
+                                        setStartDate(newFullDate);
+                                    }
                                 }
                             }}/>
                         </div>
@@ -294,20 +315,41 @@ const MaintenanceSchedulerSection: React.FC = () => {
                         <Calendar
                             mode="single"
                             selected={endDate}
-                            onSelect={setEndDate}
+                            onSelect={(day) => {
+                                const newSelectedDate = day;
+                                if (newSelectedDate) {
+                                    const currentHours = endDate?.getHours() ?? 0;
+                                    const currentMinutes = endDate?.getMinutes() ?? 0;
+                                    const updatedDate = new Date(newSelectedDate);
+                                    updatedDate.setHours(currentHours, currentMinutes, 0, 0);
+                                    setEndDate(updatedDate);
+                                } else {
+                                    setEndDate(undefined);
+                                }
+                            }}
                         />
                         <div className="p-2 border-t border-border">
                              <Input
                                 type="time"
                                 value={endDate ? format(endDate, "HH:mm") : ""}
                                 onChange={(e) => {
-                                    const time = e.target.value.split(':');
-                                    if (time.length === 2) {
-                                        const hours = parseInt(time[0]);
-                                        const minutes = parseInt(time[1]);
-                                        const newFullDate = endDate ? new Date(endDate) : new Date(); // Use current date or today
-                                        newFullDate.setHours(hours, minutes, 0, 0);
-                                        setEndDate(newFullDate);
+                                    const timeValue = e.target.value;
+                                    if (timeValue) {
+                                        const timeParts = timeValue.split(':');
+                                        if (timeParts.length === 2) {
+                                            const hours = parseInt(timeParts[0]);
+                                            const minutes = parseInt(timeParts[1]);
+                                            // Initialize with current endDate's date part, or today if endDate is undefined
+                                            const newFullDate = endDate ? new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate()) : new Date();
+                                            newFullDate.setHours(hours, minutes, 0, 0);
+                                            setEndDate(newFullDate);
+                                        }
+                                    } else { // Handle clearing the time
+                                        if (endDate) {
+                                            const newFullDate = new Date(endDate);
+                                            newFullDate.setHours(0,0,0,0); // Reset time to midnight
+                                            setEndDate(newFullDate);
+                                        }
                                     }
                                 }}/>
                         </div>
